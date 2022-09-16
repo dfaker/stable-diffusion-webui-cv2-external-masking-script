@@ -10,9 +10,9 @@ import numpy as np
 
 lastx,lasty=None,None
 
-def display_mask_ui(image,mask,max_size):
+def display_mask_ui(image,mask,max_size,initPolys):
 
-  polys = [[]]
+  polys = initPolys
 
   def on_mouse(event, x, y, buttons, param):
     global lastx,lasty
@@ -87,7 +87,7 @@ def display_mask_ui(image,mask,max_size):
               segs = [(int(a/factor),int(b/factor)) for a,b in polyline]
               cv2.fillPoly(newmask, np.array([segs]), (255,255,255), 0)
           cv2.destroyWindow('MaskingWindow')
-          return Image.fromarray( cv2.cvtColor( newmask, cv2.COLOR_BGR2GRAY) )
+          return Image.fromarray( cv2.cvtColor( newmask, cv2.COLOR_BGR2GRAY) ),polys
         break
       if key == ord('c'):
         polys = [[]]
@@ -97,7 +97,7 @@ def display_mask_ui(image,mask,max_size):
       break
 
   cv2.destroyWindow('MaskingWindow')
-  return mask
+  return mask,polys
 
 import modules.scripts as scripts
 import gradio as gr
@@ -130,8 +130,11 @@ class Script(scripts.Script):
         if not hasattr(self,'lastMask'):
           self.lastMask = None
 
+        if not hasattr(self,'lastPolys'):
+          self.lastPolys = [[]]
+
         if ask_on_each_run or self.lastImg is None or self.lastImg != p.init_images[0]:
-          p.image_mask  = display_mask_ui(p.init_images[0],p.image_mask,max_size)
+          p.image_mask,self.lastPolys  = display_mask_ui(p.init_images[0],p.image_mask,max_size,self.lastPolys)
           self.lastImg  = p.init_images[0]
           if p.image_mask is not None:
             self.lastMask = p.image_mask.copy()

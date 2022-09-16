@@ -5,7 +5,7 @@ The UI inside stable-diffusion-webui is pretty simple
 
 `Masking preview size` controls the size of the popup CV2 window
 
-`Draw new mask on every run` will popup a new window for a new mask each time generate is clicked, usually it'll only appear on the first run, or when the input image is saved.
+`Draw new mask on every run` will popup a new window for a new mask each time generate is clicked, usually it'll only appear on the first run, or when the input image is changed.
 
 The masking window itself is pretty minimal
 ![Screenshot 2022-09-16 091427](https://user-images.githubusercontent.com/35278260/190592650-3796c54d-ea47-475a-829c-580660a4160f.jpg)

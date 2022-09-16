@@ -1,5 +1,9 @@
 # Provides an external cv2 powered masking tool for https://github.com/AUTOMATIC1111/stable-diffusion-webui
 
+requires cv2 to be installed
+
+`py -m pip install opencv-python`
+
 The UI inside stable-diffusion-webui is pretty simple 
 ![Screenshot 2022-09-16 091930](https://user-images.githubusercontent.com/35278260/190592056-644c59db-907d-4cf1-ba85-0014eceea12a.jpg)
 

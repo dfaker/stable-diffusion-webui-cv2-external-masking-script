@@ -25,7 +25,6 @@ def display_mask_ui(image,mask,max_size):
       polys.append([])
 
   opencvImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-  opencvImageOrig = opencvImage.copy()
 
   if mask is None:
     opencvMask  = cv2.cvtColor( np.array(opencvImage) , cv2.COLOR_BGR2GRAY)
@@ -87,9 +86,8 @@ def display_mask_ui(image,mask,max_size):
             if len(polyline)>0:
               segs = [(int(a/factor),int(b/factor)) for a,b in polyline]
               cv2.fillPoly(newmask, np.array([segs]), (255,255,255), 0)
-              cv2.destroyWindow('MaskingWindow')
-              return Image.fromarray( cv2.cvtColor( newmask, cv2.COLOR_BGR2GRAY) )
-          return 
+          cv2.destroyWindow('MaskingWindow')
+          return Image.fromarray( cv2.cvtColor( newmask, cv2.COLOR_BGR2GRAY) )
         break
       if key == ord('c'):
         polys = [[]]

@@ -134,6 +134,10 @@ class Script(scripts.Script):
           self.lastPolys = [[]]
 
         if ask_on_each_run or self.lastImg is None or self.lastImg != p.init_images[0]:
+
+          if self.lastImg is None or self.lastImg != p.init_images[0]:
+            self.lastPolys = [[]]
+
           p.image_mask,self.lastPolys  = display_mask_ui(p.init_images[0],p.image_mask,max_size,self.lastPolys)
           self.lastImg  = p.init_images[0]
           if p.image_mask is not None:

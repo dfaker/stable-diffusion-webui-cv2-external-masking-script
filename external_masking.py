@@ -117,12 +117,27 @@ class Script(scripts.Script):
         if not is_img2img:
             return None
 
-        max_size = gr.Slider(label="Masking preview size", minimum=512, maximum=2048, step=8, value=1024)
-        ask_on_each_run = gr.Checkbox(label='Draw new mask on every run', value=False)
+        initialSize = 1024
 
-        return [max_size,ask_on_each_run]
+        try:
+          import tkinter as tk
+          root = tk.Tk()
+          screen_width  = int(root.winfo_screenwidth())
+          screen_height = int(root.winfo_screenheight())
+          print(screen_width,screen_height)
+          initialSize = min(screen_width,screen_height)-50
+          print(initialSize)
+        except Exception as e:
+          print(e)
 
-    def run(self, p, max_size, ask_on_each_run):
+        max_size = gr.Slider(label="Masking preview size", minimum=512, maximum=initialSize*2, step=8, value=initialSize)
+        with gr.Row():
+          ask_on_each_run      = gr.Checkbox(label='Draw new mask on every run', value=False)
+          non_contigious_split = gr.Checkbox(label='Process non-contigious masks separately', value=False)
+
+        return [max_size,ask_on_each_run,non_contigious_split]
+
+    def run(self, p, max_size, ask_on_each_run, non_contigious_split):
 
         if not hasattr(self,'lastImg'):
           self.lastImg = None
@@ -145,7 +160,36 @@ class Script(scripts.Script):
         elif hasattr(self,'lastMask') and self.lastMask is not None:
           p.image_mask = self.lastMask.copy()
 
-        proc = process_images(p)
-        images = proc.images
+        if non_contigious_split:
+          maskImgArr = np.array(p.image_mask)
+          ret, markers = cv2.connectedComponents(maskImgArr)
+          markerCount = markers.max()
+
+          if markerCount > 1:
+            tempimages = []
+            tempMasks  = []
+            for maski in range(1,markerCount+1):
+              print('maski',maski)
+              maskSection = np.zeros_like(maskImgArr)
+              maskSection[markers==maski] = 255
+              p.image_mask = Image.fromarray( maskSection.copy() )
+              proc = process_images(p)
+              images = proc.images
+              tempimages.append(np.array(images[0]))
+              tempMasks.append(np.array(maskSection.copy()))
+
+            finalImage = tempimages[0].copy()
+
+            for outimg,outmask in zip(tempimages,tempMasks):
+              finalImage[outmask==255] = outimg[outmask==255]
+            images = [finalImage]
+
+
+          else:
+            proc = process_images(p)
+            images = proc.images
+        else:
+          proc = process_images(p)
+          images = proc.images
 
         return Processed(p, images, p.seed, "")

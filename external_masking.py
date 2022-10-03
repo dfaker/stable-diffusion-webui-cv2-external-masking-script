@@ -9,20 +9,41 @@ from PIL import Image
 import numpy as np
 
 lastx,lasty=None,None
+zoomOrigin = 0,0
+zoomFactor = 1
+
+midDragStart = None
 
 def display_mask_ui(image,mask,max_size,initPolys):
 
   polys = initPolys
 
   def on_mouse(event, x, y, buttons, param):
-    global lastx,lasty
+    global lastx,lasty,zoomFactor,midDragStart,zoomOrigin
 
-    lastx,lasty = x,y
+    lastx,lasty = x/zoomFactor,y/zoomFactor
 
     if event == cv2.EVENT_LBUTTONDOWN:
-      polys[-1].append((x,y))
+      polys[-1].append((x/zoomFactor,y/zoomFactor))
     elif event == cv2.EVENT_RBUTTONDOWN:
       polys.append([])
+    elif event == cv2.EVENT_RBUTTONDOWN:
+        midDragStart = x,y
+    elif event == cv2.EVENT_RBUTTONUP:
+        zoomOrigin = 0,0
+        if midDragStart is not None:
+            zoomOrigin = x-midDragStart[0],yx-midDragStart[1],
+        midDragStart = None
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if midDragStart is not None:
+            zoomOrigin = x-midDragStart[0],yx-midDragStart[1],
+    elif event == cv2.EVENT_MOUSEWHEEL:
+        if buttons > 0:
+            zoomFactor += 0.1
+        else:
+            zoomFactor -= 0.1
+        zoomFactor = max(1,zoomFactor)
+
 
   opencvImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
@@ -49,7 +70,8 @@ def display_mask_ui(image,mask,max_size,initPolys):
 
   while 1:
 
-    foreground    = np.zeros_like(srcImage)
+    zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+    foreground    = np.zeros_like(zoomedSrc)
 
     for i,polyline in enumerate(polys):
       if len(polyline)>0:
@@ -63,13 +85,13 @@ def display_mask_ui(image,mask,max_size,initPolys):
           active=True
 
         if active:
-          cv2.fillPoly(foreground, np.array([segs]), ( 190, 107,  253), 0)
+          cv2.fillPoly(foreground, (np.array([segs])*zoomFactor).astype(int) , ( 190, 107,  253), 0)
         else:
-          cv2.fillPoly(foreground, np.array([segs]), (255, 255, 255), 0)
+          cv2.fillPoly(foreground, (np.array([segs])*zoomFactor).astype(int) , (255, 255, 255), 0)
 
 
-    foreground[foreground<1] = srcImage[foreground<1]
-    combinedImage = cv2.addWeighted(srcImage, 0.5, foreground, 0.5, 0)
+    foreground[foreground<1] = zoomedSrc[foreground<1]
+    combinedImage = cv2.addWeighted(zoomedSrc, 0.5, foreground, 0.5, 0)
 
     helpText='Q=Save, C=Reset, LeftClick=Add new point to polygon, Rightclick=Close polygon'
     combinedImage = cv2.putText(combinedImage, helpText, (0,11), font, 0.4, (0,0,0), 2, cv2.LINE_AA)
@@ -98,6 +120,13 @@ def display_mask_ui(image,mask,max_size,initPolys):
 
   cv2.destroyWindow('MaskingWindow')
   return mask,polys
+
+if __name__ == '__main__':
+    img  = Image.open('K:\\test2.png')
+    oldmask = Image.new('L',img.size,(0,))
+    newmask,newPolys = display_mask_ui(img,oldmask,1024,[[]])
+    newmask.show()
+    exit()
 
 import modules.scripts as scripts
 import gradio as gr

@@ -68,9 +68,14 @@ def display_mask_ui(image,mask,max_size,initPolys):
   srcImage = opencvImage.copy()
   combinedImage = opencvImage.copy()
 
+  zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+  lastZoomFactor = zoomFactor
   while 1:
 
-    zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+    if lastZoomFactor != zoomFactor:
+        zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+        lastZoomFactor = zoomFactor
+
     foreground    = np.zeros_like(zoomedSrc)
 
     for i,polyline in enumerate(polys):
@@ -78,7 +83,6 @@ def display_mask_ui(image,mask,max_size,initPolys):
 
         segs = polyline[::]
 
-        print(i,len(polys),lastx,lasty)
         active=False
         if len(polys[-1])>0 and i==len(polys)-1 and lastx is not None:
           segs = polyline+[(lastx,lasty)]

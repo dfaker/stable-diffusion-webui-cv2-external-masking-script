@@ -15,28 +15,33 @@ zoomFactor = 1
 midDragStart = None
 
 def display_mask_ui(image,mask,max_size,initPolys):
+  global lastx,lasty,zoomOrigin,zoomFactor
+
+  lastx,lasty=None,None
+  zoomOrigin = 0,0
+  zoomFactor = 1
 
   polys = initPolys
 
   def on_mouse(event, x, y, buttons, param):
     global lastx,lasty,zoomFactor,midDragStart,zoomOrigin
 
-    lastx,lasty = x/zoomFactor,y/zoomFactor
+    lastx,lasty = (x+zoomOrigin[0])/zoomFactor,(y+zoomOrigin[1])/zoomFactor
 
     if event == cv2.EVENT_LBUTTONDOWN:
-      polys[-1].append((x/zoomFactor,y/zoomFactor))
+      polys[-1].append((lastx,lasty))
     elif event == cv2.EVENT_RBUTTONDOWN:
       polys.append([])
-    elif event == cv2.EVENT_RBUTTONDOWN:
-        midDragStart = x,y
-    elif event == cv2.EVENT_RBUTTONUP:
-        zoomOrigin = 0,0
+    elif event == cv2.EVENT_MBUTTONDOWN:
+        midDragStart = zoomOrigin[0]+x,zoomOrigin[1]+y
+    elif event == cv2.EVENT_MBUTTONUP:
         if midDragStart is not None:
-            zoomOrigin = x-midDragStart[0],yx-midDragStart[1],
+            zoomOrigin = max(0,midDragStart[0]-x),max(0,midDragStart[1]-y)
         midDragStart = None
     elif event == cv2.EVENT_MOUSEMOVE:
         if midDragStart is not None:
-            zoomOrigin = x-midDragStart[0],yx-midDragStart[1],
+            zoomOrigin = max(0,midDragStart[0]-x),max(0,midDragStart[1]-y)
+            print(zoomOrigin)
     elif event == cv2.EVENT_MOUSEWHEEL:
         if buttons > 0:
             zoomFactor += 0.1
@@ -69,12 +74,19 @@ def display_mask_ui(image,mask,max_size,initPolys):
   combinedImage = opencvImage.copy()
 
   zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+  zoomedSrc = zoomedSrc[zoomOrigin[1]:zoomOrigin[1]+max_size,zoomOrigin[0]:zoomOrigin[0]+max_size,:]
+
   lastZoomFactor = zoomFactor
+  lastZoomOrigin = zoomOrigin
   while 1:
 
-    if lastZoomFactor != zoomFactor:
+    if lastZoomFactor != zoomFactor or lastZoomOrigin != zoomOrigin:
         zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+        zoomedSrc = zoomedSrc[zoomOrigin[1]:zoomOrigin[1]+max_size,zoomOrigin[0]:zoomOrigin[0]+max_size,:]
+        zoomedSrc = cv2.copyMakeBorder(zoomedSrc, 0, max_size-zoomedSrc.shape[0], 0, max_size-zoomedSrc.shape[1], cv2.BORDER_CONSTANT)
+
         lastZoomFactor = zoomFactor
+        lastZoomOrigin = zoomOrigin
 
     foreground    = np.zeros_like(zoomedSrc)
 
@@ -88,16 +100,19 @@ def display_mask_ui(image,mask,max_size,initPolys):
           segs = polyline+[(lastx,lasty)]
           active=True
 
+        segs = np.array(segs) - np.array([(zoomOrigin[0]/zoomFactor,zoomOrigin[1]/zoomFactor)])
+        segs = np.array([segs])*zoomFactor
+        
         if active:
-          cv2.fillPoly(foreground, (np.array([segs])*zoomFactor).astype(int) , ( 190, 107,  253), 0)
+          cv2.fillPoly(foreground, (np.array(segs)).astype(int) , ( 190, 107,  253), 0)
         else:
-          cv2.fillPoly(foreground, (np.array([segs])*zoomFactor).astype(int) , (255, 255, 255), 0)
+          cv2.fillPoly(foreground, (np.array(segs)).astype(int) , (255, 255, 255), 0)
 
 
     foreground[foreground<1] = zoomedSrc[foreground<1]
     combinedImage = cv2.addWeighted(zoomedSrc, 0.5, foreground, 0.5, 0)
 
-    helpText='Q=Save, C=Reset, LeftClick=Add new point to polygon, Rightclick=Close polygon'
+    helpText='Q=Save, C=Reset, LeftClick=Add new point to polygon, Rightclick=Close polygon, MouseWheel=Zoom, MidDrag=Pan'
     combinedImage = cv2.putText(combinedImage, helpText, (0,11), font, 0.4, (0,0,0), 2, cv2.LINE_AA)
     combinedImage = cv2.putText(combinedImage, helpText, (0,11), font, 0.4, (255,255,255), 1, cv2.LINE_AA)
 
@@ -129,7 +144,15 @@ if __name__ == '__main__':
     img  = Image.open('K:\\test2.png')
     oldmask = Image.new('L',img.size,(0,))
     newmask,newPolys = display_mask_ui(img,oldmask,1024,[[]])
-    newmask.show()
+
+
+    opencvImg  = cv2.cvtColor( np.array(img) , cv2.COLOR_RGB2BGR)
+    opencvMask  = cv2.cvtColor( np.array(newmask) , cv2.COLOR_GRAY2BGR)
+
+    combinedImage = cv2.addWeighted(opencvImg, 0.5, opencvMask, 0.5, 0)
+    cv2.imshow('combinedImage Final',combinedImage)
+    cv2.waitKey(-1)
+
     exit()
 
 import modules.scripts as scripts

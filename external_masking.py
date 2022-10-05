@@ -41,13 +41,16 @@ def display_mask_ui(image,mask,max_size,initPolys):
     elif event == cv2.EVENT_MOUSEMOVE:
         if midDragStart is not None:
             zoomOrigin = max(0,midDragStart[0]-x),max(0,midDragStart[1]-y)
-            print(zoomOrigin)
     elif event == cv2.EVENT_MOUSEWHEEL:
+        origZoom = zoomFactor
         if buttons > 0:
-            zoomFactor += 0.1
+            zoomFactor *= 1.1
         else:
-            zoomFactor -= 0.1
+            zoomFactor *= 0.9
         zoomFactor = max(1,zoomFactor)
+
+        zoomOrigin = max(0,int(zoomOrigin[0]+ (max_size*0.25*(zoomFactor-origZoom)))) , max(0,int(zoomOrigin[1] + (max_size*0.25*(zoomFactor-origZoom))))
+
 
 
   opencvImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
@@ -62,7 +65,6 @@ def display_mask_ui(image,mask,max_size,initPolys):
 
   factor = max_size/maxdim
 
-  opencvImage = cv2.resize(opencvImage, (int(opencvImage.shape[1]*factor),int(opencvImage.shape[0]*factor)))
 
   cv2.namedWindow('MaskingWindow', cv2.WINDOW_AUTOSIZE)
   cv2.setWindowProperty('MaskingWindow', cv2.WND_PROP_TOPMOST, 1)
@@ -73,7 +75,11 @@ def display_mask_ui(image,mask,max_size,initPolys):
   srcImage = opencvImage.copy()
   combinedImage = opencvImage.copy()
 
-  zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+  interp = cv2.INTER_CUBIC
+  if zoomFactor*factor < 0:
+    interp = cv2.INTER_AREA
+
+  zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor*factor,fy=zoomFactor*factor,interpolation=interp)
   zoomedSrc = zoomedSrc[zoomOrigin[1]:zoomOrigin[1]+max_size,zoomOrigin[0]:zoomOrigin[0]+max_size,:]
 
   lastZoomFactor = zoomFactor
@@ -81,7 +87,10 @@ def display_mask_ui(image,mask,max_size,initPolys):
   while 1:
 
     if lastZoomFactor != zoomFactor or lastZoomOrigin != zoomOrigin:
-        zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor,fy=zoomFactor)
+        interp = cv2.INTER_CUBIC
+        if zoomFactor*factor < 0:
+          interp = cv2.INTER_AREA
+        zoomedSrc = cv2.resize(srcImage,(None,None),fx=zoomFactor*factor,fy=zoomFactor*factor,interpolation=interp)
         zoomedSrc = zoomedSrc[zoomOrigin[1]:zoomOrigin[1]+max_size,zoomOrigin[0]:zoomOrigin[0]+max_size,:]
         zoomedSrc = cv2.copyMakeBorder(zoomedSrc, 0, max_size-zoomedSrc.shape[0], 0, max_size-zoomedSrc.shape[1], cv2.BORDER_CONSTANT)
 
@@ -101,12 +110,17 @@ def display_mask_ui(image,mask,max_size,initPolys):
           active=True
 
         segs = np.array(segs) - np.array([(zoomOrigin[0]/zoomFactor,zoomOrigin[1]/zoomFactor)])
-        segs = np.array([segs])*zoomFactor
+        segs = (np.array([segs])*zoomFactor).astype(int)
         
         if active:
-          cv2.fillPoly(foreground, (np.array(segs)).astype(int) , ( 190, 107,  253), 0)
+          cv2.fillPoly(foreground, (np.array(segs)) , ( 190, 107,  253), 0)
         else:
-          cv2.fillPoly(foreground, (np.array(segs)).astype(int) , (255, 255, 255), 0)
+          cv2.fillPoly(foreground, (np.array(segs)) , (255, 255, 255), 0)
+
+        if active:
+            for x,y in segs[0]:
+                cv2.circle(foreground, (int(x),int(y)), 5, (25,25,25), 3)
+                cv2.circle(foreground, (int(x),int(y)), 5, (255,255,255), 2)
 
 
     foreground[foreground<1] = zoomedSrc[foreground<1]
@@ -145,13 +159,14 @@ if __name__ == '__main__':
     oldmask = Image.new('L',img.size,(0,))
     newmask,newPolys = display_mask_ui(img,oldmask,1024,[[]])
 
-
     opencvImg  = cv2.cvtColor( np.array(img) , cv2.COLOR_RGB2BGR)
     opencvMask  = cv2.cvtColor( np.array(newmask) , cv2.COLOR_GRAY2BGR)
 
     combinedImage = cv2.addWeighted(opencvImg, 0.5, opencvMask, 0.5, 0)
-    cv2.imshow('combinedImage Final',combinedImage)
-    cv2.waitKey(-1)
+    combinedImage = Image.fromarray( cv2.cvtColor(  combinedImage  , cv2.COLOR_BGR2RGB))
+    
+    display_mask_ui(combinedImage,oldmask,1024,[[]])
+
 
     exit()
 

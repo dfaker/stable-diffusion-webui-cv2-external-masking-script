@@ -12,13 +12,17 @@ The UI inside stable-diffusion-webui is pretty simple
 `Draw new mask on every run` will popup a new window for a new mask each time generate is clicked, usually it'll only appear on the first run, or when the input image is changed.
 
 The masking window itself is pretty minimal
-![Screenshot 2022-09-16 091427](https://user-images.githubusercontent.com/35278260/190592650-3796c54d-ea47-475a-829c-580660a4160f.jpg)
+![image](https://user-images.githubusercontent.com/35278260/193962552-3dfa4d28-5899-4e3f-a589-362de5990636.png)
 
 Showing the polygon currently being drawn in pink, left clicking starts a new polygon, right clicking closes the current polycon being drawn.
 
 C to the clear current mask.
 
 Q to quit and pass the current mask back to stable-diffusion-webui
+
+Scroll the mouse wheel to zoom in
+
+Middle click and drag to pan around the image
 
 The mask drawn with the script will not be shown on the input image, but will be used for all outputs:
 

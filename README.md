@@ -1,8 +1,14 @@
-# Provides an external cv2 powered masking tool for https://github.com/AUTOMATIC1111/stable-diffusion-webui
+## Provides an external cv2 powered masking tool for https://github.com/AUTOMATIC1111/stable-diffusion-webui
+
+## Installation
+**[Download the zipped script Here](https://github.com/dfaker/stable-diffusion-webui-cv2-external-masking-script/archive/refs/heads/main.zip)**
+and copy the file external_masking.py into your scripts folder.
 
 requires cv2 to be installed
 
 `py -m pip install opencv-python`
+
+## Guide
 
 The UI inside stable-diffusion-webui is pretty simple 
 ![Screenshot 2022-09-16 091930](https://user-images.githubusercontent.com/35278260/190592056-644c59db-907d-4cf1-ba85-0014eceea12a.jpg)

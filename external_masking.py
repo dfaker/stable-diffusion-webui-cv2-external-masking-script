@@ -252,7 +252,11 @@ class Script(scripts.Script):
             finalImage = tempimages[0].copy()
 
             for outimg,outmask in zip(tempimages,tempMasks):
-              finalImage[outmask==255] = outimg[outmask==255]
+
+              resizeimg = cv2.resize(outimg, (finalImage.shape[0],finalImage.shape[1]) )
+              resizedMask = cv2.resize(outmask, (finalImage.shape[0],finalImage.shape[1]) )
+              
+              finalImage[resizedMask==255] = resizeimg[resizedMask==255]
             images = [finalImage]
 
 

@@ -263,4 +263,5 @@ class Script(scripts.Script):
           proc = process_images(p)
           images = proc.images
 
-        return Processed(p, images, p.seed, "")
+        proc.images = images
+        return proc

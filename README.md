@@ -6,7 +6,9 @@ and copy the file external_masking.py into your scripts folder.
 
 requires cv2 to be installed
 
-`py -m pip install opencv-python`
+```ShellSession
+py -m pip install opencv-python
+```
 
 ## Guide
 
@@ -38,7 +40,7 @@ The mask drawn with the script will not be shown on the input image, but will be
 
 Some users are reporting errors with the gui window functions like `highgui\src\window.cpp:1250: error: (-2:Unspecified error) The function is not implemented.` which seems to be down to having `opencv-python-headless` installed which doesn't include the gui code used to display the image windows, uninstall the current version and reinstall if you get a similar message:
 
-```
+```ShellSession
 py -m pip uninstall opencv-python-headless
 py -m pip uninstall opencv-python
 py -m pip install --upgrade opencv-python

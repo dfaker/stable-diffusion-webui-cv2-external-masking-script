@@ -8,13 +8,6 @@ requires cv2 to be installed
 
 `py -m pip install opencv-python`
 
-Some users are reporting errors with the gui window functions like `highgui\src\window.cpp:1250: error: (-2:Unspecified error) The function is not implemented.` which seems to be down to having `opencv-python-headless` installed which doesn't include the interactive gui libraries, uninstall the current version and reinstall if you get a similar message:
-
-```
-py -m pip uninstall opencv-python-headless
-py -m pip uninstall opencv-python
-py -m pip install --upgrade opencv-python
-```
 ## Guide
 
 The UI inside stable-diffusion-webui is pretty simple 
@@ -40,3 +33,14 @@ Middle click and drag to pan around the image
 The mask drawn with the script will not be shown on the input image, but will be used for all outputs:
 
 ![Screenshot 2022-09-16 091911](https://user-images.githubusercontent.com/35278260/190593109-10d47736-428c-4c3f-841a-a964778fbec7.jpg)
+
+## Incompatible opencv versions
+
+Some users are reporting errors with the gui window functions like `highgui\src\window.cpp:1250: error: (-2:Unspecified error) The function is not implemented.` which seems to be down to having `opencv-python-headless` installed which doesn't include the gui code used to display the image windows, uninstall the current version and reinstall if you get a similar message:
+
+```
+py -m pip uninstall opencv-python-headless
+py -m pip uninstall opencv-python
+py -m pip install --upgrade opencv-python
+```
+

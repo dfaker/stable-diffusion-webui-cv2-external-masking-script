@@ -10,6 +10,8 @@ requires cv2 to be installed
 py -m pip install opencv-python
 ```
 
+Due to conflicting cv2 versions this extension cannot be used at the same time as the `d8ahazard/sd_dreambooth_extension` extension.
+
 ## Guide
 
 The UI inside stable-diffusion-webui is pretty simple 
